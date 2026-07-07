@@ -73,6 +73,7 @@ class Transcriber:
             word_timestamps=word_timestamps,
             language=language,
             vad_filter=True,  # skips silence, improves accuracy on long/noisy clips
+            beam_size=3,   # lower than the default (5) for faster inference; still solid accuracy
         )
 
         full_text_parts = []
