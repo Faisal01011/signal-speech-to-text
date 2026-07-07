@@ -25,7 +25,7 @@ EXPOSE 8000
 # Pre-download the Whisper model at build time so the first request after
 # deploy doesn't have to wait ~10s+ downloading it. Set WHISPER_MODEL_SIZE
 # as a build arg if you want a different default model baked in.
-ARG WHISPER_MODEL_SIZE=small.en
+ARG WHISPER_MODEL_SIZE=base.en
 ENV WHISPER_MODEL_SIZE=${WHISPER_MODEL_SIZE}
 RUN python -c "from faster_whisper import WhisperModel; WhisperModel('${WHISPER_MODEL_SIZE}', device='cpu', compute_type='int8')"
 
