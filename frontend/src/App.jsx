@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import Recorder from "./components/Recorder.jsx";
 import TranscriptView from "./components/TranscriptView.jsx";
 import History from "./components/History.jsx";
@@ -81,6 +82,7 @@ export default function App() {
           />
         </aside>
       </div>
+      <SpeedInsights />
     </div>
   );
 }
