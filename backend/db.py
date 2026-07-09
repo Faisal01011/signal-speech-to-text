@@ -32,6 +32,7 @@ class Transcription(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    user_id = Column(String, index=True, nullable=True)  # Supabase user UUID; nullable for pre-auth records
 
     text = Column(String, nullable=False)
     language = Column(String)
@@ -46,6 +47,7 @@ class Transcription(Base):
         return {
             "id": self.id,
             "created_at": self.created_at.isoformat() if self.created_at else None,
+            "user_id": self.user_id,
             "text": self.text,
             "language": self.language,
             "language_probability": self.language_probability,

@@ -17,6 +17,7 @@ from sqlalchemy import desc
 
 from transcriber import transcriber
 from db import init_db, get_db, Transcription
+from auth import get_current_user_id
 
 app = FastAPI(
     title="Speech-to-Text Converter API",
@@ -67,6 +68,7 @@ async def transcribe_audio(
     word_timestamps: bool = Query(True, description="Include per-word timestamps and confidence"),
     language: str | None = Query(None, description="Force language code, e.g. 'en'. Omit to auto-detect."),
     db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
 ):
     ext = os.path.splitext(file.filename or "")[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
@@ -105,6 +107,7 @@ async def transcribe_audio(
     # user rather than losing their result over a storage hiccup.
     try:
         record = Transcription(
+            user_id=user_id,
             text=result_dict["text"],
             language=result_dict["language"],
             language_probability=result_dict["language_probability"],
@@ -128,22 +131,32 @@ def list_transcriptions(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
 ):
-    """Returns past transcriptions, most recent first."""
+    """Returns the logged-in user's past transcriptions, most recent first."""
     records = (
         db.query(Transcription)
+        .filter(Transcription.user_id == user_id)
         .order_by(desc(Transcription.created_at))
         .offset(offset)
         .limit(limit)
         .all()
     )
-    total = db.query(Transcription).count()
+    total = db.query(Transcription).filter(Transcription.user_id == user_id).count()
     return {"total": total, "items": [r.to_dict() for r in records]}
 
 
 @app.get("/transcriptions/{transcription_id}")
-def get_transcription(transcription_id: str, db: Session = Depends(get_db)):
-    record = db.query(Transcription).filter(Transcription.id == transcription_id).first()
+def get_transcription(
+    transcription_id: str,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    record = (
+        db.query(Transcription)
+        .filter(Transcription.id == transcription_id, Transcription.user_id == user_id)
+        .first()
+    )
     if not record:
         raise HTTPException(status_code=404, detail="Transcription not found")
     return record.to_dict()
